@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Builds a Release copy of Remi and installs it in /Applications, replacing any
+# older copy. Quits whichever Remi is running first.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BUILT="$ROOT/build/DerivedData/Build/Products/Release/Remi.app"
+INSTALLED="/Applications/Remi.app"
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+
+xcodebuild -project "$ROOT/Remi.xcodeproj" -scheme Remi -configuration Release \
+  -destination "platform=macOS" -derivedDataPath "$ROOT/build/DerivedData" -quiet build
+
+# Quitting waits for recordings to save, so give it a while.
+osascript -e 'quit app "Remi"' > /dev/null 2>&1 || true
+for _ in {1..300}; do
+  pgrep -xq Remi || break
+  sleep 0.1
+done
+# Two copies would fight over Remi's adb server.
+if pgrep -xq Remi; then
+  echo "error: Remi is still running. Quit it, then run bin/install again." >&2
+  exit 1
+fi
+
+rm -rf "$INSTALLED"
+ditto "$BUILT" "$INSTALLED"
+# Re-registering makes macOS pick up a changed app icon right away.
+"$LSREGISTER" -f "$INSTALLED"
+open "$INSTALLED"
+echo "Installed $INSTALLED"

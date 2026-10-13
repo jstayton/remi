@@ -1,0 +1,83 @@
+Lock out PIN guessing. Each PIN allows 3 wrong attempts, but a client could keep
+sending PAIR-PIN-START for a new PIN with 3 more. After 9 wrong PINs in a row,
+PAIR-PIN-START is refused for 5 minutes. A successful pairing resets the count.
+
+diff --git a/lib/raop.c b/lib/raop.c
+index 11ef106..5ae2b4d 100644
+--- a/lib/raop.c
++++ b/lib/raop.c
+@@ -79,6 +79,8 @@ struct raop_s {
+     bool use_pin;
+     bool pin_issued;          /* a PIN was shown by PAIR-PIN-START and can still be used */
+     int pin_failed_attempts;
++    int pin_failures;         /* wrong PINs in a row, across PINs, since the last pairing */
++    time_t pin_locked_until;  /* PAIR-PIN-START is refused until then */
+   
+      /* public key as string */
+     char pk_str[2*ED25519_KEY_SIZE + 1];
+@@ -629,6 +631,8 @@ raop_init(raop_callbacks_t *callbacks) {
+     raop->pin = 0;
+     raop->pin_issued = false;
+     raop->pin_failed_attempts = 0;
++    raop->pin_failures = 0;
++    raop->pin_locked_until = 0;
+     raop->use_pin = false;
+ 
+     /* initialize switch for display of client's streaming data records */    
+diff --git a/lib/raop_handlers.h b/lib/raop_handlers.h
+index deea423..e402910 100644
+--- a/lib/raop_handlers.h
++++ b/lib/raop_handlers.h
+@@ -21,6 +21,7 @@
+ #include "dnssdint.h"
+ #include "utils.h"
+ #include <ctype.h>
++#include <time.h>
+ #include <stdlib.h>
+ #include <inttypes.h>
+ #include <plist/plist.h>
+@@ -250,6 +251,10 @@ raop_handler_info(raop_conn_t *conn,
+ 
+ /* Wrong PINs allowed before PAIR-PIN-START must issue a new one, which limits guessing. */
+ #define MAX_PIN_ATTEMPTS 3
++/* A client could keep requesting new PINs, each with its own attempts. After this many wrong
++ * PINs in a row, new PINs are refused for a while, which keeps guessing impractical. */
++#define MAX_PIN_FAILURES 9
++#define PIN_LOCKOUT_SECONDS 300
+ 
+ static void
+ raop_handler_pairpinstart(raop_conn_t *conn,
+@@ -257,6 +262,12 @@ raop_handler_pairpinstart(raop_conn_t *conn,
+                           char **response_data, int *response_datalen) {
+     raop_t *raop = conn->raop;
+     logger_log(raop->logger, LOGGER_INFO, "client sent PAIR-PIN-START request");
++    if (time(NULL) < raop->pin_locked_until) {
++        logger_log(raop->logger, LOGGER_ERR, "PAIR-PIN-START refused: too many wrong PINs, try again later");
++        raop->pin_issued = false;
++        http_response_init(response, "RTSP/1.0", 470, "Client Authentication Failure");
++        return;
++    }
+     int pin_4 = 0;
+     if (raop->pin > 9999) {
+         pin_4 = raop->pin % 10000;
+@@ -389,6 +400,12 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
+                 logger_log(raop->logger, LOGGER_ERR, "Too many wrong PINs: the client must request a new one");
+                 raop->pin_issued = false;
+             }
++            if (++raop->pin_failures >= MAX_PIN_FAILURES) {
++                logger_log(raop->logger, LOGGER_ERR, "Too many wrong PINs: no new PINs for %d seconds", PIN_LOCKOUT_SECONDS);
++                raop->pin_locked_until = time(NULL) + PIN_LOCKOUT_SECONDS;
++                raop->pin_failures = 0;
++                raop->pin_issued = false;
++            }
+             goto authentication_failed;
+         }
+         if (logger_debug) {
+@@ -438,6 +455,7 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
+         conn->pin_verified = true;
+         /* A PIN pairs one client only. */
+         raop->pin_issued = false;
++        raop->pin_failures = 0;
+         pairing_session_set_setup_status(conn->session);
+         plist_t res_root_node = plist_new_dict();
+         plist_t res_epk_node = plist_new_data((const char *) epk, 32);

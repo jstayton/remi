@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Builds and packages a Remi release, then drafts it on GitHub:
+#
+#   bin/release 0.2.0
+#
+# It commits and tags the new version, then builds a clean Release app from it
+# (signed ad hoc, since there's no Developer ID), zips it, and gathers the source
+# that GPL-3.0 and LGPL-2.1 require alongside it. Then it pushes and creates a
+# draft GitHub Release to review and publish by hand.
+set -euo pipefail
+
+VERSION="${1:-}"
+# Android's libusb, which is built into adb. AOSP stopped tagging platform-tools
+# releases after 35.0.2, but this, its latest commit, predates platform-tools 37.0.1.
+LIBUSB_COMMIT="7b5267099855d320f6013d667d113e3619f18bf5"
+LIBUSB_REPO="https://android.googlesource.com/platform/external/libusb"
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT="$ROOT/Remi.xcodeproj/project.pbxproj"
+OUT="$ROOT/build/release"
+TAG="v$VERSION"
+
+fail() {
+  echo "error: $1" >&2
+  exit 1
+}
+
+check_ready() {
+  [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "usage: bin/release <major.minor.patch>"
+  cd "$ROOT"
+  [[ "$(git branch --show-current)" == "main" ]] || fail "releases are made from main"
+  [[ -z "$(git status --porcelain)" ]] || fail "the working tree has uncommitted changes"
+  [[ -z "$(git submodule status | grep -v '^ ')" ]] || fail "submodules aren't initialized or are modified"
+  ! git rev-parse --quiet --verify "refs/tags/$TAG" > /dev/null || fail "$TAG already exists"
+  [[ -f "$ROOT/LICENSE" ]] || fail "LICENSE is missing; Remi can't be distributed without it"
+  git remote get-url origin > /dev/null 2>&1 || fail "there's no origin remote to push to"
+  gh auth status > /dev/null 2>&1 || fail "gh isn't logged in"
+}
+
+write_version() {
+  sed -i '' -e "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $1;/" \
+    -e "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = $2;/" "$PROJECT"
+}
+
+set_version() {
+  OLD_VERSION="$(sed -n 's/.*MARKETING_VERSION = \([^;]*\);/\1/p' "$PROJECT" | head -n 1)"
+  OLD_BUILD="$(sed -n 's/.*CURRENT_PROJECT_VERSION = \([0-9]*\);/\1/p' "$PROJECT" | head -n 1)"
+  write_version "$VERSION" $((OLD_BUILD + 1))
+}
+
+build_app() {
+  rm -rf "$OUT"
+  mkdir -p "$OUT"
+  xcodebuild -project "$ROOT/Remi.xcodeproj" -scheme Remi -configuration Release \
+    -destination "platform=macOS" -derivedDataPath "$OUT/DerivedData" -quiet clean build
+  APP="$OUT/DerivedData/Build/Products/Release/Remi.app"
+  codesign --verify --deep --strict "$APP"
+  ditto -c -k --keepParent "$APP" "$OUT/Remi-$VERSION.zip"
+}
+
+# GitHub's own source archives leave out submodules, so UxPlay and libplist are added here.
+# The archive has no git history, so it carries the revisions bin/build-uxplay reads from git.
+package_source() {
+  local stage="$OUT/source"
+  mkdir -p "$stage"
+  git -C "$ROOT" archive --format=tar --prefix="Remi-$VERSION/" "$TAG" | tar -x -C "$stage"
+  git -C "$ROOT" submodule foreach --quiet \
+    "git archive --format=tar --prefix=\"Remi-$VERSION/\$sm_path/\" HEAD | tar -x -C '$stage'"
+  git -C "$ROOT" submodule foreach --quiet "git rev-parse HEAD > '$stage/Remi-$VERSION/'\$sm_path/.revision"
+  git -C "$ROOT/vendor/libplist" describe --tags > "$stage/Remi-$VERSION/vendor/libplist/.tarball-version"
+  tar -czf "$OUT/Remi-$VERSION-source.tar.gz" -C "$stage" "Remi-$VERSION"
+
+  # Fetched by commit with git, since googlesource refuses archive downloads.
+  local libusb="$OUT/libusb"
+  git init --quiet "$libusb"
+  git -C "$libusb" fetch --quiet --depth 1 "$LIBUSB_REPO" "$LIBUSB_COMMIT"
+  git -C "$libusb" archive --format=tar.gz --prefix=libusb/ FETCH_HEAD > "$OUT/libusb-android-source.tar.gz"
+}
+
+commit_version() {
+  git -C "$ROOT" commit --quiet -m "$TAG" -- "$PROJECT"
+  RELEASE_COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
+  git -C "$ROOT" tag -s "$TAG" -m "$TAG"
+}
+
+# Undoes the release's own changes (the tag, the version commit, and the two version numbers),
+# keeping anything else that changed while it ran, including other edits to the project file.
+roll_back() {
+  git -C "$ROOT" tag -d "$TAG" > /dev/null 2>&1 || true
+  if [[ -n "$RELEASE_COMMIT" ]]; then
+    if [[ "$(git -C "$ROOT" rev-parse HEAD)" != "$RELEASE_COMMIT" ]]; then
+      echo "warning: other commits followed $TAG's, so it's left in place. Undo it with: git revert $RELEASE_COMMIT" >&2
+      return
+    fi
+    git -C "$ROOT" reset --quiet --soft "$START"
+    git -C "$ROOT" restore --staged -- "$PROJECT"
+  fi
+  [[ -z "$OLD_VERSION" ]] || write_version "$OLD_VERSION" "$OLD_BUILD"
+}
+
+publish() {
+  git -C "$ROOT" push --quiet --atomic origin main "$TAG"
+  # Once pushed, the release commit and tag stay, even if drafting fails.
+  trap - EXIT
+  gh release create "$TAG" --draft --title "$TAG" --notes "" \
+    "$OUT/Remi-$VERSION.zip" "$OUT/Remi-$VERSION-source.tar.gz" "$OUT/libusb-android-source.tar.gz"
+}
+
+check_ready
+START="$(git -C "$ROOT" rev-parse HEAD)"
+OLD_VERSION=""
+OLD_BUILD=""
+RELEASE_COMMIT=""
+# Until it's pushed, a failure or Ctrl-C undoes the release.
+trap roll_back EXIT
+set_version
+commit_version
+build_app
+package_source
+publish
+echo "Drafted $TAG. Add release notes and publish it on GitHub."

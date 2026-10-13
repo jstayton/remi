@@ -1,0 +1,368 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXFileReference section */
+		5C0000000000000000000001 /* Remi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Remi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5C0000000000000000000002 /* Exceptions for "Remi" folder in "Remi" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5C0000000000000000000010 /* Remi */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5C0000000000000000000003 /* Remi */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5C0000000000000000000002 /* Exceptions for "Remi" folder in "Remi" target */,
+			);
+			path = Remi;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5C0000000000000000000011 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5C0000000000000000000004 = {
+			isa = PBXGroup;
+			children = (
+				5C0000000000000000000003 /* Remi */,
+				5C0000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5C0000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C0000000000000000000001 /* Remi.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5C0000000000000000000010 /* Remi */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5C0000000000000000000030 /* Build configuration list for PBXNativeTarget "Remi" */;
+			buildPhases = (
+				5C0000000000000000000014 /* Build Dependencies */,
+				5C0000000000000000000012 /* Sources */,
+				5C0000000000000000000011 /* Frameworks */,
+				5C0000000000000000000013 /* Resources */,
+				5C0000000000000000000015 /* Embed Android Tools */,
+				5C0000000000000000000016 /* Embed License Notices */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5C0000000000000000000003 /* Remi */,
+			);
+			name = Remi;
+			productName = Remi;
+			productReference = 5C0000000000000000000001 /* Remi.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5C0000000000000000000020 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+			};
+			buildConfigurationList = 5C0000000000000000000040 /* Build configuration list for PBXProject "Remi" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5C0000000000000000000004;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5C0000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5C0000000000000000000010 /* Remi */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5C0000000000000000000013 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		5C0000000000000000000014 /* Build Dependencies */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Dependencies";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\n\"$PROJECT_DIR/bin/build-uxplay\"\n\"$PROJECT_DIR/bin/fetch-android-tools\"\n";
+		};
+		5C0000000000000000000015 /* Embed Android Tools */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/build/android-tools/adb",
+				"$(PROJECT_DIR)/build/android-tools/adb-NOTICE.txt",
+				"$(PROJECT_DIR)/build/android-tools/scrcpy-server",
+				"$(PROJECT_DIR)/build/android-tools/scrcpy-LICENSE.txt",
+			);
+			name = "Embed Android Tools";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_FOLDER_PATH)/adb",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/scrcpy-server",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Licenses/adb-NOTICE.txt",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Licenses/scrcpy-LICENSE.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\nTOOLS=\"$PROJECT_DIR/build/android-tools\"\nADB=\"$TARGET_BUILD_DIR/$EXECUTABLE_FOLDER_PATH/adb\"\ninstall -m 755 \"$TOOLS/adb\" \"$ADB\"\nRESOURCES=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\ninstall -m 644 \"$TOOLS/scrcpy-server\" \"$RESOURCES/scrcpy-server\"\n# Redistributing adb and scrcpy-server means shipping their license notices too.\nmkdir -p \"$RESOURCES/Licenses\"\ninstall -m 644 \"$TOOLS/adb-NOTICE.txt\" \"$TOOLS/scrcpy-LICENSE.txt\" \"$RESOURCES/Licenses/\"\n# Nested executables must be signed before Xcode signs the app around them.\ncodesign --force --options runtime --timestamp=none --sign \"${EXPANDED_CODE_SIGN_IDENTITY:--}\" \"$ADB\"\n";
+		};
+		5C0000000000000000000016 /* Embed License Notices */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/LICENSE",
+				"$(PROJECT_DIR)/vendor/UxPlay/LICENSE",
+				"$(PROJECT_DIR)/vendor/UxPlay/lib/playfair/LICENSE.md",
+				"$(PROJECT_DIR)/vendor/UxPlay/lib/llhttp/LICENSE-MIT",
+				"$(PROJECT_DIR)/vendor/libplist/COPYING.LESSER",
+				"/opt/homebrew/opt/openssl@3/LICENSE.txt",
+			);
+			name = "Embed License Notices";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Licenses/Remi-LICENSE.txt",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Licenses/UxPlay-LICENSE.txt",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Licenses/playfair-LICENSE.md",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Licenses/llhttp-LICENSE.txt",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Licenses/libplist-COPYING.LESSER.txt",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Licenses/OpenSSL-LICENSE.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\n# Remi's own license and those of the libraries compiled into it. adb's and scrcpy's notices are embedded with them.\nLICENSES=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Licenses\"\nmkdir -p \"$LICENSES\"\ninstall -m 644 \"$PROJECT_DIR/LICENSE\" \"$LICENSES/Remi-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/LICENSE\" \"$LICENSES/UxPlay-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/lib/playfair/LICENSE.md\" \"$LICENSES/playfair-LICENSE.md\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/lib/llhttp/LICENSE-MIT\" \"$LICENSES/llhttp-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/libplist/COPYING.LESSER\" \"$LICENSES/libplist-COPYING.LESSER.txt\"\ninstall -m 644 /opt/homebrew/opt/openssl@3/LICENSE.txt \"$LICENSES/OpenSSL-LICENSE.txt\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5C0000000000000000000012 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5C0000000000000000000041 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+			};
+			name = Debug;
+		};
+		5C0000000000000000000042 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+			};
+			name = Release;
+		};
+		5C0000000000000000000031 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Remi/Remi.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/build/uxplay-src/lib",
+					"$(PROJECT_DIR)/build/libplist/include",
+				);
+				INFOPLIST_FILE = Remi/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"$(PROJECT_DIR)/build/uxplay/airplay/libairplay.a",
+					"$(PROJECT_DIR)/build/uxplay/playfair/libplayfair.a",
+					"$(PROJECT_DIR)/build/uxplay/llhttp/libllhttp.a",
+					"$(PROJECT_DIR)/build/libplist/lib/libplist-2.0.a",
+					"/opt/homebrew/opt/openssl@3/lib/libcrypto.a",
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jstayton.remi;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Remi/Remi-Bridging-Header.h";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		5C0000000000000000000032 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Remi/Remi.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/build/uxplay-src/lib",
+					"$(PROJECT_DIR)/build/libplist/include",
+				);
+				INFOPLIST_FILE = Remi/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"$(PROJECT_DIR)/build/uxplay/airplay/libairplay.a",
+					"$(PROJECT_DIR)/build/uxplay/playfair/libplayfair.a",
+					"$(PROJECT_DIR)/build/uxplay/llhttp/libllhttp.a",
+					"$(PROJECT_DIR)/build/libplist/lib/libplist-2.0.a",
+					"/opt/homebrew/opt/openssl@3/lib/libcrypto.a",
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jstayton.remi;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Remi/Remi-Bridging-Header.h";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5C0000000000000000000030 /* Build configuration list for PBXNativeTarget "Remi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C0000000000000000000031 /* Debug */,
+				5C0000000000000000000032 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5C0000000000000000000040 /* Build configuration list for PBXProject "Remi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C0000000000000000000041 /* Debug */,
+				5C0000000000000000000042 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5C0000000000000000000020 /* Project object */;
+}

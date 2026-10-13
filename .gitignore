@@ -1,0 +1,8 @@
+.DS_Store
+build/
+xcuserdata/
+*.xcuserstate
+
+# A global "Icon" ignore (for macOS folder icon files) also matches icon/ on a
+# case-insensitive disk, so re-include the app icon's source.
+!/icon/

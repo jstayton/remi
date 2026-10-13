@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# Builds UxPlay's AirPlay protocol library (patched) and its libplist dependency
+# as static libraries in build/. The submodules stay pristine: sources are
+# copied into build/ and uxplay/patches/*.patch are applied to the copy.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-26.0}"
+PLIST_SRC="$ROOT/build/libplist-src"
+PLIST_OUT="$ROOT/build/libplist"
+UXPLAY_SRC="$ROOT/build/uxplay-src"
+UXPLAY_OUT="$ROOT/build/uxplay"
+STAMP="$UXPLAY_OUT/.inputs.sha256"
+
+# Xcode runs this script with a minimal PATH.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+# A release's source archive has no git history, so it carries these in files (see bin/release).
+submodule_revision() {
+  if [[ -e "$ROOT/$1/.git" ]]; then
+    git -C "$ROOT/$1" rev-parse HEAD
+  else
+    cat "$ROOT/$1/.revision"
+  fi
+}
+
+libplist_version() {
+  if [[ -e "$ROOT/vendor/libplist/.git" ]]; then
+    git -C "$ROOT/vendor/libplist" describe --tags
+  else
+    cat "$ROOT/vendor/libplist/.tarball-version"
+  fi
+}
+
+inputs_hash() {
+  (
+    cd "$ROOT"
+    echo "$DEPLOYMENT_TARGET"
+    submodule_revision vendor/UxPlay
+    submodule_revision vendor/libplist
+    cat bin/build-uxplay uxplay/CMakeLists.txt uxplay/patches/*.patch
+  ) | shasum -a 256
+}
+
+build_libplist() {
+  local version
+  version="$(libplist_version)"
+  rm -rf "$PLIST_SRC" "$PLIST_OUT"
+  mkdir -p "$PLIST_SRC"
+  rsync -a --exclude .git "$ROOT/vendor/libplist/" "$PLIST_SRC/"
+  echo "$version" > "$PLIST_SRC/.tarball-version"
+  (
+    cd "$PLIST_SRC"
+    NOCONFIGURE=1 ./autogen.sh > /dev/null 2>&1
+    CFLAGS="-O2 -mmacosx-version-min=$DEPLOYMENT_TARGET" ./configure \
+      --prefix="$PLIST_OUT" --disable-shared --enable-static --without-cython --without-tests > /dev/null
+    make -j "$(sysctl -n hw.ncpu)" install > /dev/null
+  )
+}
+
+build_uxplay() {
+  rm -rf "$UXPLAY_SRC"
+  mkdir -p "$UXPLAY_SRC"
+  cp -R "$ROOT/vendor/UxPlay/lib" "$UXPLAY_SRC/lib"
+  for patch in "$ROOT"/uxplay/patches/*.patch; do
+    (cd "$UXPLAY_SRC" && patch -p1 --quiet --forward < "$patch")
+  done
+  cmake -S "$ROOT/uxplay" -B "$UXPLAY_OUT" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET="$DEPLOYMENT_TARGET" \
+    -DCMAKE_PREFIX_PATH="$PLIST_OUT" \
+    -DUXPLAY_DIR="$UXPLAY_SRC" \
+    "$@" > /dev/null
+  cmake --build "$UXPLAY_OUT" --parallel
+}
+
+# Up to date only if the inputs are unchanged and every output the Xcode build links is still there.
+outputs_exist() {
+  [[ -f "$UXPLAY_OUT/airplay/libairplay.a" && -f "$UXPLAY_OUT/playfair/libplayfair.a" \
+    && -f "$UXPLAY_OUT/llhttp/libllhttp.a" && -f "$PLIST_OUT/lib/libplist-2.0.a" && -d "$UXPLAY_SRC/lib" ]]
+}
+
+if [[ -f "$STAMP" && "$(inputs_hash)" == "$(cat "$STAMP")" ]] && outputs_exist; then
+  echo "UxPlay library is up to date"
+  exit 0
+fi
+
+build_libplist
+build_uxplay "$@"
+inputs_hash > "$STAMP"

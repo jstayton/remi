@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Downloads the pinned Android platform-tools (for adb) and scrcpy release (for
+# scrcpy-server), verifies their SHA-256s, and extracts them with their license
+# notices into build/android-tools/ for embedding in Remi.app. The scrcpy
+# version must match ScrcpySession.serverVersion.
+set -euo pipefail
+
+PLATFORM_TOOLS_VERSION="37.0.1"
+PLATFORM_TOOLS_ARCHIVE="platform-tools_r$PLATFORM_TOOLS_VERSION-darwin.zip"
+# Matches the SHA-1 in Google's repository2-3.xml and the SHA-256 scrcpy pins.
+PLATFORM_TOOLS_SHA256="ee39ad5967e95c2a07f04dbcbde96b1a0c916ba376096db5d2f498b7727a5d1d"
+PLATFORM_TOOLS_URL="https://dl.google.com/android/repository/$PLATFORM_TOOLS_ARCHIVE"
+
+SCRCPY_VERSION="5.0.1"
+SCRCPY_ARCHIVE="scrcpy-macos-aarch64-v$SCRCPY_VERSION.tar.gz"
+SCRCPY_SHA256="33611e51977a8289e2e124b220f727895181ef2eb9060e0987a4dc2db9cf0d6b"
+SCRCPY_URL="https://github.com/Genymobile/scrcpy/releases/download/v$SCRCPY_VERSION/$SCRCPY_ARCHIVE"
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DOWNLOADS="$ROOT/build/downloads"
+OUT="$ROOT/build/android-tools"
+STAMP="$OUT/.version"
+VERSIONS="platform-tools $PLATFORM_TOOLS_VERSION, scrcpy $SCRCPY_VERSION"
+FILES=(adb adb-NOTICE.txt scrcpy-server scrcpy-LICENSE.txt)
+
+is_up_to_date() {
+  [[ -f "$STAMP" && "$(cat "$STAMP")" == "$VERSIONS" ]] || return 1
+  for file in "${FILES[@]}"; do
+    [[ -f "$OUT/$file" ]] || return 1
+  done
+}
+
+# Downloads to $DOWNLOADS/$1 unless it's already there, then verifies it.
+download() {
+  local archive="$1" url="$2" sha256="$3"
+  if [[ ! -f "$DOWNLOADS/$archive" ]]; then
+    curl --fail --location --silent --show-error --max-time 300 --output "$DOWNLOADS/$archive.partial" "$url"
+    mv "$DOWNLOADS/$archive.partial" "$DOWNLOADS/$archive"
+  fi
+  if ! echo "$sha256  $DOWNLOADS/$archive" | shasum -a 256 --check --status; then
+    rm -f "$DOWNLOADS/$archive"
+    echo "error: $archive failed SHA-256 verification" >&2
+    exit 1
+  fi
+}
+
+# Installs the file at $1 inside the extracted archive as $OUT/$2.
+install_from() {
+  local source="$EXTRACT/$1" name="$2" mode="$3"
+  if [[ ! -f "$source" ]]; then
+    echo "error: the download doesn't contain $1" >&2
+    exit 1
+  fi
+  install -m "$mode" "$source" "$OUT/$name"
+}
+
+if is_up_to_date; then
+  echo "Android tools are up to date"
+  exit 0
+fi
+
+mkdir -p "$DOWNLOADS"
+download "$PLATFORM_TOOLS_ARCHIVE" "$PLATFORM_TOOLS_URL" "$PLATFORM_TOOLS_SHA256"
+download "$SCRCPY_ARCHIVE" "$SCRCPY_URL" "$SCRCPY_SHA256"
+
+EXTRACT="$(mktemp -d)"
+trap 'rm -rf "$EXTRACT"' EXIT
+unzip -q "$DOWNLOADS/$PLATFORM_TOOLS_ARCHIVE" platform-tools/adb platform-tools/NOTICE.txt -d "$EXTRACT"
+tar -xzf "$DOWNLOADS/$SCRCPY_ARCHIVE" -C "$EXTRACT"
+
+rm -rf "$OUT"
+mkdir -p "$OUT"
+install_from platform-tools/adb adb 755
+# adb's own license (Apache-2.0) plus those of the libraries built into it, like libusb (LGPL-2.1).
+install_from platform-tools/NOTICE.txt adb-NOTICE.txt 644
+install_from "scrcpy-macos-aarch64-v$SCRCPY_VERSION/scrcpy-server" scrcpy-server 644
+install_from "scrcpy-macos-aarch64-v$SCRCPY_VERSION/LICENSE" scrcpy-LICENSE.txt 644
+echo "$VERSIONS" > "$STAMP"
+echo "Extracted adb ($PLATFORM_TOOLS_VERSION) and scrcpy-server ($SCRCPY_VERSION)"
