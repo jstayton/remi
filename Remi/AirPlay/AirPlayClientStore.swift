@@ -25,7 +25,13 @@ final class AirPlayClientStore: @unchecked Sendable {
     for client in clients {
       latestByDeviceID[client.deviceID] = client
     }
-    return latestByDeviceID.values.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    // By device ID too, so devices with the same name keep a stable order.
+    return latestByDeviceID.values.sorted {
+      switch $0.name.localizedStandardCompare($1.name) {
+      case .orderedSame: $0.deviceID < $1.deviceID
+      case let order: order == .orderedAscending
+      }
+    }
   }
 
   func contains(publicKey: String) -> Bool {

@@ -9,6 +9,9 @@ final class AirPlayMirroring {
     let deviceID: String
   }
 
+  /// Runs when a device connects or disconnects.
+  var onDevicesChange: (() -> Void)?
+
   private let receiver: AirPlayReceiver
   private let passwordPrompt = AirPlayPasswordPrompt()
   private var window: MirrorWindowController?
@@ -17,7 +20,10 @@ final class AirPlayMirroring {
   init(supportDirectory: URL) {
     let clientStore = AirPlayClientStore(fileURL: supportDirectory.appending(path: "airplay-clients.json"))
     receiver = AirPlayReceiver(clientStore: clientStore)
-    receiver.onEvent = { [weak self] event in self?.handle(event) }
+    receiver.onEvent = { [weak self] event in
+      self?.handle(event)
+      self?.onDevicesChange?()
+    }
   }
 
   var isRunning: Bool { receiver.isRunning }
@@ -137,6 +143,7 @@ final class AirPlayMirroring {
   private func windowClosedByUser() {
     window = nil
     client = nil
+    onDevicesChange?()
     restartReceiver()
   }
 
