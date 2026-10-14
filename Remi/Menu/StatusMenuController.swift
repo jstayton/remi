@@ -1,13 +1,15 @@
 import AppKit
 
 /// The menu bar item, which is Remi's only UI besides mirror windows. The menu is
-/// rebuilt each time it opens so it always reflects the current devices. The Dock icon,
-/// when there is one, offers the same menu.
+/// rebuilt each time it opens, and while it's open whenever devices come and go, so it
+/// always reflects the current devices. The Dock icon, when there is one, offers the same menu.
 @MainActor
 final class StatusMenuController: NSObject, NSMenuDelegate {
   private let coordinator: MirrorCoordinator
   private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
   private let menu = NSMenu()
+  private var isMenuOpen = false
+  private var shownDevices: [MirrorDevice] = []
 
   init(coordinator: MirrorCoordinator) {
     self.coordinator = coordinator
@@ -16,15 +18,33 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     menu.delegate = self
     menu.autoenablesItems = false
     statusItem.menu = menu
+    coordinator.onDevicesChange = { [weak self] in self?.devicesChanged() }
+  }
+
+  func menuWillOpen(_ menu: NSMenu) {
+    isMenuOpen = true
+  }
+
+  func menuDidClose(_ menu: NSMenu) {
+    isMenuOpen = false
   }
 
   func menuNeedsUpdate(_ menu: NSMenu) {
+    shownDevices = coordinator.devices
     menu.removeAllItems()
     addItems(to: menu)
     menu.addItem(.separator())
     let quitItem = item("Quit Remi", action: #selector(quit))
     quitItem.keyEquivalent = "q"
     menu.addItem(quitItem)
+  }
+
+  /// Only a real change rebuilds the open menu, since rebuilding closes an open submenu.
+  private func devicesChanged() {
+    guard isMenuOpen, coordinator.devices != shownDevices else {
+      return
+    }
+    menuNeedsUpdate(menu)
   }
 
   /// The menu without Quit, which the Dock adds itself.

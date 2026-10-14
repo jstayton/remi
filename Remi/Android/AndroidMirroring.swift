@@ -18,6 +18,9 @@ final class AndroidMirroring {
   /// How long a newly paired device has to connect before Remi says to look for it in the menu.
   private static let pairedConnectTimeout = Duration.seconds(30)
 
+  /// Runs when a device connects or disconnects.
+  var onDevicesChange: (() -> Void)?
+
   private let adb: Adb
   private let tracker: AndroidDeviceTracker
   private let browser = AndroidServiceBrowser()
@@ -265,6 +268,7 @@ final class AndroidMirroring {
       retire(mirror.session)
     }
     mirrorPairedDevice(among: devices)
+    onDevicesChange?()
   }
 
   // MARK: - Mirroring
@@ -297,7 +301,9 @@ final class AndroidMirroring {
           return
         }
         retire(mirror.session)
+        onDevicesChange?()
       }
+      onDevicesChange?()
     } catch {
       // A mirror that's no longer current was stopped on purpose (Android turned off, or the
       // phone disconnected), so its failure isn't worth an alert.
@@ -331,6 +337,7 @@ final class AndroidMirroring {
     mirror.window?.closeForSource()
     mirrors[serial] = nil
     retire(session)
+    onDevicesChange?()
     if let failure {
       Alert.show(failure, title: "Couldn't Start Mirroring")
     }

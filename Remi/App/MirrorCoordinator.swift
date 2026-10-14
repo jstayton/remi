@@ -4,6 +4,9 @@ import AppKit
 /// never deals with either directly.
 @MainActor
 final class MirrorCoordinator {
+  /// Runs when a device connects or disconnects.
+  var onDevicesChange: (() -> Void)?
+
   private let airPlay: AirPlayMirroring
   /// Nil when adb is missing from the app bundle.
   private let android: AndroidMirroring?
@@ -17,6 +20,8 @@ final class MirrorCoordinator {
       Log.android.error("Android mirroring is unavailable: \(error, privacy: .public)")
       android = nil
     }
+    airPlay.onDevicesChange = { [weak self] in self?.onDevicesChange?() }
+    android?.onDevicesChange = { [weak self] in self?.onDevicesChange?() }
   }
 
   /// Whether the receiver is running, so one that failed to start shows as off.

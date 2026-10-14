@@ -1,6 +1,6 @@
 /// A device row in the status menu, from either the iOS or the Android side.
-struct MirrorDevice {
-  enum Source {
+struct MirrorDevice: Equatable {
+  enum Source: Equatable {
     case airPlay(deviceID: String)
     /// `serial` (adb's, per connection) only exists while connected. `hardwareSerial` is
     /// unknown for a connection Remi didn't make itself.
