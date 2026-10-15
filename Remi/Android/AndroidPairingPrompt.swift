@@ -6,7 +6,8 @@ import AppKit
 enum AndroidPairingPrompt {
 
   /// Returns the host of the phone that paired, which it connects from next, or nil if none did.
-  static func present(adb: Adb) async -> String? {
+  /// `progress` shows while pairing, and is left open after a pairing that succeeds.
+  static func present(adb: Adb, progress: ProgressPrompt) async -> String? {
     NSApp.activate()
     let addressField = NSTextField(string: "")
     addressField.placeholderString = "192.168.1.20:37123"
@@ -27,11 +28,16 @@ enum AndroidPairingPrompt {
 
     do {
       let (address, code) = try validate(address: addressField.stringValue, code: codeField.stringValue)
+      progress.show()
       // The code goes in on stdin so it never shows up in the process list.
       _ = try await adb.run(["pair", address], input: code)
       return AndroidDevice.host(ofAddress: address)
     } catch {
-      Alert.show(error, title: "Pairing Failed")
+      progress.close()
+      // Cancelling (from the progress prompt, or turning Android off) stops adb, which isn't a failure.
+      if !Task.isCancelled {
+        Alert.show(error, title: "Pairing Failed")
+      }
       return nil
     }
   }

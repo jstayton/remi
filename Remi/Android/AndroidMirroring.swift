@@ -4,12 +4,20 @@ import AppKit
 /// remembered phones, and one mirror window per phone that's mirroring.
 @MainActor
 final class AndroidMirroring {
+  @MainActor
   private final class Mirror {
     let session: ScrcpySession
     var window: MirrorWindowController?
+    /// Shows while the session starts, until the window shows its first frame.
+    var prompt: ProgressPrompt?
 
     init(session: ScrcpySession) {
       self.session = session
+    }
+
+    func closePrompt() {
+      prompt?.close()
+      prompt = nil
     }
   }
 
@@ -17,6 +25,10 @@ final class AndroidMirroring {
   private static let connectRetryDelay = Duration.seconds(3)
   /// How long a newly paired device has to connect before Remi says to look for it in the menu.
   private static let pairedConnectTimeout = Duration.seconds(30)
+  /// Most phones start mirroring faster than this, so their connecting prompt never shows.
+  private static let connectingPromptDelay = Duration.seconds(1)
+  /// Long enough for adb to start, Bonjour to find paired phones, and adb to connect to them.
+  private static let searchDuration = Duration.seconds(10)
 
   /// Runs when a device connects or disconnects.
   var onDevicesChange: (() -> Void)?
@@ -39,6 +51,10 @@ final class AndroidMirroring {
   /// A device just paired starts mirroring as soon as it connects from here, like an iPhone does
   /// after its AirPlay password.
   private var pairedHost: String?
+  /// Shows while waiting for a device that just paired to connect.
+  private var pairedConnectPrompt: ProgressPrompt?
+  private var pairedConnectTimeoutTask: Task<Void, Never>?
+  private var searchTask: Task<Void, Never>?
 
   init(adb: Adb, supportDirectory: URL) {
     self.adb = adb
@@ -49,6 +65,8 @@ final class AndroidMirroring {
   }
 
   var isEnabled: Bool { Preferences.isAndroidEnabled }
+  /// True for a while after discovery starts, so a menu without devices reads as still looking.
+  private(set) var isSearching = false
 
   /// Connected phones, plus remembered ones that are away, sorted by name.
   var devices: [MirrorDevice] {
@@ -99,16 +117,23 @@ final class AndroidMirroring {
 
   /// Brings the phone's window to the front, or starts mirroring it.
   func select(serial: String) {
+    select(serial: serial, prompt: nil)
+  }
+
+  /// `prompt`, when there is one, takes over as the connecting prompt.
+  private func select(serial: String, prompt: ProgressPrompt?) {
     if let window = mirrors[serial]?.window {
+      prompt?.close()
       window.bringToFront()
       return
     }
     guard tracker.devices.contains(where: { $0.serial == serial }) else {
+      prompt?.close()
       return
     }
     // Activate while the click still counts as the user's, since the window takes a moment to appear.
     NSApp.activate()
-    startMirroring(serial: serial)
+    startMirroring(serial: serial, prompt: prompt)
   }
 
   /// Only removes the phone from the menu. It comes back the next time it connects.
@@ -135,33 +160,42 @@ final class AndroidMirroring {
       guard isEnabled, !Task.isCancelled else {
         return
       }
+      let progress = ProgressPrompt(title: "Pair Android Device", status: "Pairing…")
+      progress.onCancel = { self.pairingTask?.cancel() }
       let pairedHost: String?
       switch outcome {
       case .paired(let host): pairedHost = host
-      case .useCode: pairedHost = await AndroidPairingPrompt.present(adb: adb)
+      case .useCode: pairedHost = await AndroidPairingPrompt.present(adb: adb, progress: progress)
       case .cancelled: pairedHost = nil
       }
       guard let pairedHost, isEnabled, !Task.isCancelled else {
+        progress.close()
         return
       }
-      mirrorWhenConnected(host: pairedHost)
+      mirrorWhenConnected(host: pairedHost, prompt: progress)
     }
   }
 
-  private func mirrorWhenConnected(host: String) {
+  private func mirrorWhenConnected(host: String, prompt: ProgressPrompt) {
+    // Another device can pair while one is still being waited for, and the newest wins.
+    stopWaitingForPairedDevice()
     pairedHost = host
+    prompt.status = "Waiting for the device to connect…"
+    prompt.onCancel = { [weak self] in self?.stopWaitingForPairedDevice() }
+    prompt.show()
+    pairedConnectPrompt = prompt
     mirrorPairedDevice(among: tracker.devices)
     guard pairedHost != nil else {
       return
     }
     // The device was already visible but refused Remi before pairing, so look again.
     browser.rediscover()
-    Task {
+    pairedConnectTimeoutTask = Task {
       try? await Task.sleep(for: Self.pairedConnectTimeout)
-      guard pairedHost == host, isEnabled else {
+      guard !Task.isCancelled, isEnabled else {
         return
       }
-      pairedHost = nil
+      stopWaitingForPairedDevice()
       Alert.show(
         title: "Paired",
         message: "The device will appear in Remi's menu once it connects. Click it there to start mirroring.")
@@ -174,13 +208,24 @@ final class AndroidMirroring {
     else {
       return
     }
-    self.pairedHost = nil
-    select(serial: device.serial)
+    let prompt = pairedConnectPrompt
+    pairedConnectPrompt = nil
+    stopWaitingForPairedDevice()
+    select(serial: device.serial, prompt: prompt)
+  }
+
+  private func stopWaitingForPairedDevice() {
+    pairedHost = nil
+    pairedConnectTimeoutTask?.cancel()
+    pairedConnectTimeoutTask = nil
+    pairedConnectPrompt?.close()
+    pairedConnectPrompt = nil
   }
 
   // MARK: - Discovery and connections
 
   private func startDiscovery() {
+    startSearching()
     let previous = transition
     transition = Task {
       await previous?.value
@@ -193,10 +238,35 @@ final class AndroidMirroring {
     }
   }
 
+  /// The timer starts here rather than once adb is up, so turning Android off and on quickly
+  /// can't leave an older timer running.
+  private func startSearching() {
+    searchTask?.cancel()
+    searchTask = Task {
+      try? await Task.sleep(for: Self.searchDuration)
+      if !Task.isCancelled {
+        stopSearching()
+      }
+    }
+    isSearching = true
+    onDevicesChange?()
+  }
+
+  private func stopSearching() {
+    searchTask?.cancel()
+    searchTask = nil
+    guard isSearching else {
+      return
+    }
+    isSearching = false
+    onDevicesChange?()
+  }
+
   /// Ends mirroring, stops discovery, and stops Remi's adb server, which disconnects every
   /// phone (and clears the phone's "Wireless debugging connected" notification).
   private func stopDiscovery() {
-    pairedHost = nil
+    stopWaitingForPairedDevice()
+    stopSearching()
     // Anything still using adb would start its server again, so all of it ends before kill-server.
     let qrPairing = pairingPrompt?.close()
     let pairing = pairingTask
@@ -205,6 +275,7 @@ final class AndroidMirroring {
     browser.stop()
     let sessions = mirrors.values.map(\.session) + retiringSessions.values
     for mirror in mirrors.values {
+      mirror.closePrompt()
       mirror.window?.closeForSource()
     }
     mirrors.removeAll()
@@ -263,6 +334,9 @@ final class AndroidMirroring {
         store.remember(.init(hardwareSerial: hardwareSerial, model: device.model))
       }
     }
+    if !devices.isEmpty {
+      stopSearching()
+    }
     let serials = Set(devices.map(\.serial))
     for (serial, mirror) in mirrors where !serials.contains(serial) {
       retire(mirror.session)
@@ -273,12 +347,28 @@ final class AndroidMirroring {
 
   // MARK: - Mirroring
 
-  private func startMirroring(serial: String) {
+  private func startMirroring(serial: String, prompt: ProgressPrompt?) {
     guard mirrors[serial] == nil else {
+      prompt?.close()
       return
     }
     let mirror = Mirror(session: ScrcpySession(serial: serial, adb: adb))
     mirrors[serial] = mirror
+    let model = tracker.devices.first { $0.serial == serial }?.model ?? "the device"
+    let status = "Connecting to \(model)…"
+    let prompt = prompt ?? ProgressPrompt(title: "Starting Mirroring", status: status)
+    prompt.status = status
+    prompt.onCancel = { [weak self, weak mirror] in
+      guard let self, let mirror, mirrors[serial] === mirror else {
+        return
+      }
+      mirrors[serial] = nil
+      mirror.window?.closeForSource()
+      retire(mirror.session)
+    }
+    // A prompt carried over from pairing is already showing, so this only delays a new one.
+    prompt.show(after: Self.connectingPromptDelay)
+    mirror.prompt = prompt
     Task { await run(mirror, serial: serial) }
   }
 
@@ -289,6 +379,7 @@ final class AndroidMirroring {
         Task { @MainActor in self?.sessionEnded(serial: serial, session: session, failure: failure) }
       }
       guard mirrors[serial] === mirror else {
+        mirror.closePrompt()
         retire(session)
         return
       }
@@ -303,10 +394,12 @@ final class AndroidMirroring {
         retire(mirror.session)
         onDevicesChange?()
       }
+      mirror.window?.onFirstFrame = { [weak mirror] in mirror?.closePrompt() }
       onDevicesChange?()
     } catch {
       // A mirror that's no longer current was stopped on purpose (Android turned off, or the
       // phone disconnected), so its failure isn't worth an alert.
+      mirror.closePrompt()
       retire(session)
       guard mirrors[serial] === mirror else {
         return
@@ -334,6 +427,7 @@ final class AndroidMirroring {
     guard let mirror = mirrors[serial], mirror.session === session else {
       return
     }
+    mirror.closePrompt()
     mirror.window?.closeForSource()
     mirrors[serial] = nil
     retire(session)

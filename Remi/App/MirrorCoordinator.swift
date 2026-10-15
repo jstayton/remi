@@ -4,7 +4,7 @@ import AppKit
 /// never deals with either directly.
 @MainActor
 final class MirrorCoordinator {
-  /// Runs when a device connects or disconnects.
+  /// Runs when a device connects or disconnects, or Android stops searching for them.
   var onDevicesChange: (() -> Void)?
 
   private let airPlay: AirPlayMirroring
@@ -28,6 +28,7 @@ final class MirrorCoordinator {
   var isAirPlayEnabled: Bool { airPlay.isRunning }
   var isAndroidAvailable: Bool { android != nil }
   var isAndroidEnabled: Bool { android?.isEnabled ?? false }
+  var isAndroidSearching: Bool { android?.isSearching ?? false }
 
   var devices: [MirrorDevice] {
     airPlay.devices + (android?.devices ?? [])
