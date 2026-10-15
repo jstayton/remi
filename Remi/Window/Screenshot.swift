@@ -21,7 +21,7 @@ enum Screenshot {
       try pngData(image).write(to: url, options: .withoutOverwriting)
     } catch {
       throw RemiError(
-        .screenshotFailed, "Couldn't save the screenshot to \(url.deletingLastPathComponent().path)", cause: error)
+        .screenshotFailed, "Couldn't save the screenshot to \(url.deletingLastPathComponent().path).", cause: error)
     }
     return url
   }
@@ -39,11 +39,11 @@ enum Screenshot {
   private static func pngData(_ image: CGImage) throws -> Data {
     let data = NSMutableData()
     guard let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil) else {
-      throw RemiError(.screenshotFailed, "Couldn't encode the screenshot")
+      throw RemiError(.screenshotFailed, "Couldn't encode the screenshot.")
     }
     CGImageDestinationAddImage(destination, image, nil)
     guard CGImageDestinationFinalize(destination) else {
-      throw RemiError(.screenshotFailed, "Couldn't encode the screenshot")
+      throw RemiError(.screenshotFailed, "Couldn't encode the screenshot.")
     }
     return data as Data
   }

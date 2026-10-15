@@ -81,7 +81,7 @@ enum ApplicationsMover {
       if let error = error as? RemiError {
         throw error
       }
-      throw RemiError(.moveToApplicationsFailed, "Remi couldn't be moved to \(destination.path).", cause: error)
+      throw RemiError(.moveToApplicationsFailed, "Remi couldn't move itself to \(destination.path).", cause: error)
     }
     // The user already allowed Remi in Privacy & Security. Still quarantined, the copy would be
     // translocated again, since macOS only lifts that for apps moved in Finder.

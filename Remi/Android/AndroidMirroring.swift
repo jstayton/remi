@@ -197,7 +197,7 @@ final class AndroidMirroring {
       }
       stopWaitingForPairedDevice()
       Alert.show(
-        title: "Paired",
+        title: "Device Paired",
         message: "The device will appear in Remi's menu once it connects. Click it there to start mirroring.")
     }
   }
@@ -405,8 +405,19 @@ final class AndroidMirroring {
         return
       }
       mirrors[serial] = nil
-      Alert.show(error, title: "Couldn't Start Mirroring")
+      Alert.show(Self.friendlyMirroringError(error), title: "Couldn't Start Mirroring")
     }
+  }
+
+  /// adb and scrcpy failures are technical, so the alert gets one friendly sentence and the log
+  /// keeps the details. Errors already written for the alert pass through.
+  private static func friendlyMirroringError(_ error: any Error) -> any Error {
+    if let error = error as? RemiError, [.scrcpyStreamUnavailable, .scrcpyServerNotBundled].contains(error.code) {
+      return error
+    }
+    return RemiError(
+      .scrcpyConnectFailed, "Remi couldn't connect to the device. Make sure it's on the same Wi-Fi, then try again.",
+      cause: error)
   }
 
   private static func windowKey(hardwareSerial: String) -> String {
@@ -433,7 +444,7 @@ final class AndroidMirroring {
     retire(session)
     onDevicesChange?()
     if let failure {
-      Alert.show(failure, title: "Couldn't Start Mirroring")
+      Alert.show(Self.friendlyMirroringError(failure), title: "Couldn't Start Mirroring")
     }
   }
 

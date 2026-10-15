@@ -34,6 +34,6 @@
 		<string>_adb-tls-pairing._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Remi receives AirPlay from iPhones and connects to Android devices on your local network to mirror their screens.</string>
+	<string>Remi receives AirPlay from iOS devices and connects to Android devices on your local network to mirror their screens.</string>
 </dict>
 </plist>

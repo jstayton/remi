@@ -46,7 +46,8 @@ final class ScrcpySession: @unchecked Sendable {
   /// runs on the reading thread when the stream stops, with an error if video never arrived.
   func start(onEnd: @escaping @Sendable ((any Error)?) -> Void) async throws -> String {
     guard let serverURL = Bundle.main.url(forResource: "scrcpy-server", withExtension: nil) else {
-      throw RemiError(.scrcpyServerNotBundled, "scrcpy-server is missing from Remi.app. Run bin/fetch-android-tools.")
+      throw RemiError(
+        .scrcpyServerNotBundled, "Remi is missing a file it needs to mirror Android devices. Download Remi again.")
     }
     let scid = String(format: "%08x", Self.scidPrefix | UInt32.random(in: 0...0x00FF_FFFF))
     lock.withLock {
@@ -251,7 +252,8 @@ final class ScrcpySession: @unchecked Sendable {
     case Self.h264CodecID:
       return name.isEmpty ? serial : name
     case 0, 1:
-      throw RemiError(.scrcpyStreamUnavailable, "\(name) couldn't start screen capture")
+      let device = name.isEmpty ? "The device" : name
+      throw RemiError(.scrcpyStreamUnavailable, "\(device) couldn't start capturing its screen. Try again.")
     default:
       throw RemiError(.scrcpyProtocolInvalid, "Unexpected video codec ID 0x\(String(codecID, radix: 16))")
     }
