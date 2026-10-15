@@ -8,7 +8,8 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
   private let coordinator: MirrorCoordinator
   private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
   private let menu = NSMenu()
-  private var isMenuOpen = false
+  /// The menu bar menu or the menu at the pointer, whichever is open.
+  private var openMenu: NSMenu?
   private var shownDevices: [MirrorDevice] = []
 
   init(coordinator: MirrorCoordinator) {
@@ -22,17 +23,23 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
   }
 
   func menuWillOpen(_ menu: NSMenu) {
-    isMenuOpen = true
+    openMenu = menu
   }
 
   func menuDidClose(_ menu: NSMenu) {
-    isMenuOpen = false
+    if openMenu === menu {
+      openMenu = nil
+    }
   }
 
   func menuNeedsUpdate(_ menu: NSMenu) {
     shownDevices = coordinator.devices
     menu.removeAllItems()
     addItems(to: menu)
+    // The menu at the pointer stands in for the Dock menu, which has no Quit.
+    guard menu === self.menu else {
+      return
+    }
     menu.addItem(.separator())
     let quitItem = item("Quit Remi", action: #selector(quit))
     quitItem.keyEquivalent = "q"
@@ -41,10 +48,10 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
 
   /// Only a real change rebuilds the open menu, since rebuilding closes an open submenu.
   private func devicesChanged() {
-    guard isMenuOpen, coordinator.devices != shownDevices else {
+    guard let openMenu, coordinator.devices != shownDevices else {
       return
     }
-    menuNeedsUpdate(menu)
+    menuNeedsUpdate(openMenu)
   }
 
   /// The menu without Quit, which the Dock adds itself.
@@ -58,7 +65,10 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
   /// For a click on the Dock icon with no mirror window, such as when the menu bar icon is
   /// hidden behind the notch.
   func showMenuAtPointer() {
-    makeDockMenu().popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+    let menu = makeDockMenu()
+    // Kept current while it's open, like the menu bar menu.
+    menu.delegate = self
+    menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
   }
 
   private func addItems(to menu: NSMenu) {
