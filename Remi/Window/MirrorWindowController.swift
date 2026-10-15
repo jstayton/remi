@@ -13,6 +13,9 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate, NSMenu
   private static let rotationFadeDuration: TimeInterval = 0.12
   private static let rotationReshapeDuration: TimeInterval = 0.22
 
+  /// Runs once, when the first frame shows the window.
+  var onFirstFrame: (() -> Void)?
+
   private let deviceKey: String
   private let sink: VideoSink
   private let mirrorView: MirrorView
@@ -275,6 +278,8 @@ final class MirrorWindowController: NSWindowController, NSWindowDelegate, NSMenu
     if isFirstFrame {
       window.setFrame(savedFrame(for: size) ?? initialFrame(for: size, on: screen), display: true)
       bringToFront()
+      onFirstFrame?()
+      onFirstFrame = nil
     } else {
       rotate(window, to: rotatedFrame(for: size, from: window.frame, on: screen))
     }

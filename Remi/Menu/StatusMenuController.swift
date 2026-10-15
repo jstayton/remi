@@ -11,6 +11,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
   /// The menu bar menu or the menu at the pointer, whichever is open.
   private var openMenu: NSMenu?
   private var shownDevices: [MirrorDevice] = []
+  private var shownIsAndroidSearching = false
 
   init(coordinator: MirrorCoordinator) {
     self.coordinator = coordinator
@@ -34,6 +35,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
 
   func menuNeedsUpdate(_ menu: NSMenu) {
     shownDevices = coordinator.devices
+    shownIsAndroidSearching = coordinator.isAndroidSearching
     menu.removeAllItems()
     addItems(to: menu)
     // The menu at the pointer stands in for the Dock menu, which has no Quit.
@@ -48,7 +50,9 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
 
   /// Only a real change rebuilds the open menu, since rebuilding closes an open submenu.
   private func devicesChanged() {
-    guard let openMenu, coordinator.devices != shownDevices else {
+    guard let openMenu,
+      coordinator.devices != shownDevices || coordinator.isAndroidSearching != shownIsAndroidSearching
+    else {
       return
     }
     menuNeedsUpdate(openMenu)
@@ -100,6 +104,11 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     menu.addItem(onOffItem)
     if coordinator.isAndroidEnabled {
       addDeviceItems(devices, to: menu, awayTip: "Turn on Wireless debugging on the device to connect.")
+      if coordinator.isAndroidSearching {
+        let searchingItem = NSMenuItem(title: "Searching…", action: nil, keyEquivalent: "")
+        searchingItem.isEnabled = false
+        menu.addItem(searchingItem)
+      }
     }
     let pairItem = item("Pair Device…", action: #selector(pairAndroidDevice))
     pairItem.isEnabled = coordinator.isAndroidAvailable && coordinator.isAndroidEnabled
