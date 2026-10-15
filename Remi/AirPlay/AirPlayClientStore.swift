@@ -63,7 +63,7 @@ final class AirPlayClientStore: @unchecked Sendable {
     do {
       try file.save(clients)
     } catch {
-      throw RemiError(.clientStoreSaveFailed, "Failed to save paired devices", cause: error)
+      throw RemiError(.clientStoreSaveFailed, "Remi couldn't save its list of paired devices.", cause: error)
     }
   }
 

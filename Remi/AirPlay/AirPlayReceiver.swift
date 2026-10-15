@@ -52,7 +52,9 @@ final class AirPlayReceiver {
     guard let started else {
       retainedContext.release()
       let reason = String(decoding: error.prefix { $0 != 0 }.map(UInt8.init(bitPattern:)), as: UTF8.self)
-      throw RemiError(.airPlayStartFailed, "Failed to start the AirPlay receiver: \(reason)")
+      throw RemiError(
+        .airPlayStartFailed, "AirPlay couldn't start. Turn iOS on again in Remi's menu to retry.",
+        cause: RemiError(.airPlayStartFailed, "Failed to start the AirPlay receiver: \(reason)"))
     }
     handle = started
     context = retainedContext

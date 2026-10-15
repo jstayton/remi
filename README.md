@@ -70,8 +70,8 @@ screenshots.
 
 ## Troubleshooting
 
-- **Android pairing fails with "protocol fault" or "No route to host":** Remi's
-  adb server can't reach the local network. Quit and reopen Remi.
+- **Android pairing says Remi can't reach the device on the local network:**
+  Remi's adb server can't reach the local network. Quit and reopen Remi.
 
 ## How It Works
 

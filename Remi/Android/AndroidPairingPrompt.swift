@@ -36,10 +36,27 @@ enum AndroidPairingPrompt {
       progress.close()
       // Cancelling (from the progress prompt, or turning Android off) stops adb, which isn't a failure.
       if !Task.isCancelled {
-        Alert.show(error, title: "Pairing Failed")
+        Alert.show(friendlyError(error), title: "Couldn't Pair Device")
       }
       return nil
     }
+  }
+
+  /// adb's errors are technical, so the alert gets one friendly sentence and the log keeps the details.
+  private static func friendlyError(_ error: any Error) -> any Error {
+    if let error = error as? RemiError, error.code == .androidPairingInputInvalid {
+      return error
+    }
+    let detail = String(describing: error)
+    // adb's server started before macOS let it on the local network.
+    if detail.contains("protocol fault") || detail.contains("No route to host") {
+      return RemiError(
+        .adbCommandFailed, "Remi can't reach the device on the local network. Quit and reopen Remi, then try again.",
+        cause: error)
+    }
+    return RemiError(
+      .adbCommandFailed, "Remi couldn't pair with the device. Check the pairing code and address, then try again.",
+      cause: error)
   }
 
   /// Code first, then address: the order the device shows them in.

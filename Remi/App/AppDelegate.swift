@@ -29,7 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       coordinator.start()
       self.coordinator = coordinator
     } catch {
-      Alert.show(error, title: "Remi Couldn't Start")
+      Alert.show(error, title: "Couldn't Start Remi")
       NSApp.terminate(nil)
     }
   }
