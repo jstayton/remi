@@ -101,8 +101,7 @@ phone that's plugged in stays with Android Studio's adb.
 ### Prerequisites
 
 - macOS 26 or later
-- [Xcode](https://developer.apple.com/xcode/) 26 or 27 (Xcode 27 needs Apple
-  silicon). Built with Xcode 26, the menu doesn't show device icons on macOS 27.
+- [Xcode](https://developer.apple.com/xcode/) 26 or 27
 - [Homebrew](https://brew.sh) packages for building UxPlay and libplist:
 
   ```bash
