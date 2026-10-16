@@ -16,10 +16,11 @@ screenshots and recordings.
 
 ## Install
 
-Remi needs a Mac with Apple silicon and macOS 26 or later.
+Remi needs macOS 26 or later.
 
-1. Download `Remi-<version>.zip` from the latest
-   [release](../../releases/latest), open it, and drag **Remi** to
+1. Download Remi from the latest [release](../../releases/latest):
+   `Remi-<version>-AppleSilicon.zip` for a Mac with Apple silicon, or
+   `Remi-<version>-Intel.zip` for an Intel Mac. Open it, and drag **Remi** to
    Applications.
 2. Open Remi. Remi isn't signed with an Apple Developer ID, so macOS says it
    can't verify it. Click **Done**.
@@ -100,8 +101,8 @@ phone that's plugged in stays with Android Studio's adb.
 
 ### Prerequisites
 
-- macOS 26 or later on Apple silicon
-- [Xcode](https://developer.apple.com/xcode/) 27
+- macOS 26 or later
+- [Xcode](https://developer.apple.com/xcode/) 26 or later
 - [Homebrew](https://brew.sh) packages for building UxPlay and libplist:
 
   ```bash
@@ -133,6 +134,9 @@ open build/DerivedData/Build/Products/Debug/Remi.app
 
 The app is signed ad hoc ("Sign to Run Locally"), so macOS may ask for Local
 Network access again after a rebuild.
+
+It's built for the Mac's own architecture, the only one Homebrew's OpenSSL has,
+so a build made on an Intel Mac only runs on Intel Macs.
 
 To use your own build day to day, install a Release build in /Applications.
 This quits and replaces any running copy:
@@ -203,8 +207,24 @@ bin/release 0.2.0
 
 This commits and tags the version, builds and zips the app, and packages the
 source that GPL-3.0 and LGPL-2.1 require next to it. Then it pushes and drafts
-the release. Add release notes on GitHub and publish it. If anything fails
-before the push, the version commit and tag are undone.
+the release. If anything fails before the push, the version commit and tag are
+undone.
+
+The app is built for the Mac's own architecture only. To add the other one,
+check out the tag on a Mac with that architecture and add its build to the
+draft:
+
+```bash
+git fetch --tags && git checkout v0.2.0 && git submodule update
+```
+
+```bash
+bin/release 0.2.0 --add-build
+```
+
+Then add release notes on GitHub and publish it. Do this last: releases are
+immutable once published, so the other build can't be added afterward, and a
+mistake means releasing a new version.
 
 If drafting fails after the push, rerunning `bin/release` stops because the tag
 already exists. Draft it by hand with the files in `build/release/`:

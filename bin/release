@@ -7,9 +7,16 @@
 # (signed ad hoc, since there's no Developer ID), zips it, and gathers the source
 # that GPL-3.0 and LGPL-2.1 require alongside it. Then it pushes and creates a
 # draft GitHub Release to review and publish by hand.
+#
+# The app is built for this Mac's architecture only, the only one Homebrew's
+# OpenSSL has. To add the other one, check out the tag on a Mac with it and run:
+#
+#   bin/release 0.2.0 --add-build
 set -euo pipefail
 
 VERSION="${1:-}"
+MODE="${2:-}"
+ARGUMENT_COUNT=$#
 # Android's libusb, which is built into adb. AOSP stopped tagging platform-tools
 # releases after 35.0.2, but this, its latest commit, predates platform-tools 37.0.1.
 LIBUSB_COMMIT="7b5267099855d320f6013d667d113e3619f18bf5"
@@ -25,8 +32,12 @@ fail() {
   exit 1
 }
 
+check_usage() {
+  [[ $ARGUMENT_COUNT -le 2 && "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && ( -z "$MODE" || "$MODE" == "--add-build" ) ]] ||
+    fail "usage: bin/release <major.minor.patch> [--add-build]"
+}
+
 check_ready() {
-  [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "usage: bin/release <major.minor.patch>"
   cd "$ROOT"
   [[ "$(git branch --show-current)" == "main" ]] || fail "releases are made from main"
   [[ -z "$(git status --porcelain)" ]] || fail "the working tree has uncommitted changes"
@@ -35,6 +46,18 @@ check_ready() {
   [[ -f "$ROOT/LICENSE" ]] || fail "LICENSE is missing; Remi can't be distributed without it"
   git remote get-url origin > /dev/null 2>&1 || fail "there's no origin remote to push to"
   gh auth status > /dev/null 2>&1 || fail "gh isn't logged in"
+}
+
+check_ready_to_add_build() {
+  cd "$ROOT"
+  git rev-parse --quiet --verify "refs/tags/$TAG" > /dev/null || fail "$TAG doesn't exist here. Run: git fetch --tags"
+  [[ "$(git rev-parse HEAD)" == "$(git rev-parse "$TAG^{commit}")" ]] ||
+    fail "check out $TAG first: git checkout $TAG && git submodule update"
+  [[ -z "$(git status --porcelain)" ]] || fail "the working tree has uncommitted changes"
+  [[ -z "$(git submodule status | grep -v '^ ')" ]] || fail "submodules aren't initialized or are modified"
+  gh auth status > /dev/null 2>&1 || fail "gh isn't logged in"
+  [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft 2> /dev/null)" == "true" ]] ||
+    fail "there's no draft release for $TAG to add to"
 }
 
 write_version() {
@@ -55,7 +78,15 @@ build_app() {
     -destination "platform=macOS" -derivedDataPath "$OUT/DerivedData" -quiet clean build
   APP="$OUT/DerivedData/Build/Products/Release/Remi.app"
   codesign --verify --deep --strict "$APP"
-  ditto -c -k --keepParent "$APP" "$OUT/Remi-$VERSION.zip"
+  # Named the way Apple names Macs, so people can tell which one to download.
+  local arch
+  arch="$(lipo -archs "$APP/Contents/MacOS/Remi")"
+  case "$arch" in
+    arm64) ZIP="$OUT/Remi-$VERSION-AppleSilicon.zip" ;;
+    x86_64) ZIP="$OUT/Remi-$VERSION-Intel.zip" ;;
+    *) fail "the app was built for an unexpected architecture: $arch" ;;
+  esac
+  ditto -c -k --keepParent "$APP" "$ZIP"
 }
 
 # GitHub's own source archives leave out submodules, so UxPlay and libplist are added here.
@@ -103,9 +134,17 @@ publish() {
   # Once pushed, the release commit and tag stay, even if drafting fails.
   trap - EXIT
   gh release create "$TAG" --draft --title "$TAG" --notes "" \
-    "$OUT/Remi-$VERSION.zip" "$OUT/Remi-$VERSION-source.tar.gz" "$OUT/libusb-android-source.tar.gz"
+    "$ZIP" "$OUT/Remi-$VERSION-source.tar.gz" "$OUT/libusb-android-source.tar.gz"
 }
 
+check_usage
+if [[ "$MODE" == "--add-build" ]]; then
+  check_ready_to_add_build
+  build_app
+  gh release upload "$TAG" "$ZIP"
+  echo "Added $(basename "$ZIP") to the $TAG draft. Add release notes and publish it on GitHub."
+  exit 0
+fi
 check_ready
 START="$(git -C "$ROOT" rev-parse HEAD)"
 OLD_VERSION=""
@@ -118,4 +157,5 @@ commit_version
 build_app
 package_source
 publish
-echo "Drafted $TAG. Add release notes and publish it on GitHub."
+echo "Drafted $TAG. Add the other Mac's build with --add-build before publishing, since published"
+echo "releases can't change. Then add release notes and publish it on GitHub."

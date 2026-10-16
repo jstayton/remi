@@ -124,10 +124,13 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
       // An icon sets devices apart from the section's actions.
       deviceItem.image = NSImage(
         systemSymbolName: device.isAndroid ? "smartphone" : "iphone", accessibilityDescription: nil)
-      // macOS 27 hides menu item images unless an item asks for them.
-      if #available(macOS 27, *) {
-        deviceItem.preferredImageVisibility = .visible
-      }
+      // macOS 27 hides menu item images unless an item asks for them. The macOS 26 SDK
+      // (Xcode 26) doesn't have the property.
+      #if compiler(>=6.4)
+        if #available(macOS 27, *) {
+          deviceItem.preferredImageVisibility = .visible
+        }
+      #endif
       menu.addItem(deviceItem)
     }
   }
