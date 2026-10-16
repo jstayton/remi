@@ -182,7 +182,7 @@
 				"$(PROJECT_DIR)/vendor/UxPlay/lib/playfair/LICENSE.md",
 				"$(PROJECT_DIR)/vendor/UxPlay/lib/llhttp/LICENSE-MIT",
 				"$(PROJECT_DIR)/vendor/libplist/COPYING.LESSER",
-				"/opt/homebrew/opt/openssl@3/LICENSE.txt",
+				"$(OPENSSL_PREFIX)/LICENSE.txt",
 			);
 			name = "Embed License Notices";
 			outputFileListPaths = (
@@ -197,7 +197,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -euo pipefail\n# Remi's own license and those of the libraries compiled into it. adb's and scrcpy's notices are embedded with them.\nLICENSES=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Licenses\"\nmkdir -p \"$LICENSES\"\ninstall -m 644 \"$PROJECT_DIR/LICENSE\" \"$LICENSES/Remi-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/LICENSE\" \"$LICENSES/UxPlay-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/lib/playfair/LICENSE.md\" \"$LICENSES/playfair-LICENSE.md\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/lib/llhttp/LICENSE-MIT\" \"$LICENSES/llhttp-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/libplist/COPYING.LESSER\" \"$LICENSES/libplist-COPYING.LESSER.txt\"\ninstall -m 644 /opt/homebrew/opt/openssl@3/LICENSE.txt \"$LICENSES/OpenSSL-LICENSE.txt\"\n";
+			shellScript = "set -euo pipefail\n# Remi's own license and those of the libraries compiled into it. adb's and scrcpy's notices are embedded with them.\nLICENSES=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Licenses\"\nmkdir -p \"$LICENSES\"\ninstall -m 644 \"$PROJECT_DIR/LICENSE\" \"$LICENSES/Remi-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/LICENSE\" \"$LICENSES/UxPlay-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/lib/playfair/LICENSE.md\" \"$LICENSES/playfair-LICENSE.md\"\ninstall -m 644 \"$PROJECT_DIR/vendor/UxPlay/lib/llhttp/LICENSE-MIT\" \"$LICENSES/llhttp-LICENSE.txt\"\ninstall -m 644 \"$PROJECT_DIR/vendor/libplist/COPYING.LESSER\" \"$LICENSES/libplist-COPYING.LESSER.txt\"\ninstall -m 644 \"$OPENSSL_PREFIX/LICENSE.txt\" \"$LICENSES/OpenSSL-LICENSE.txt\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -216,7 +216,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = arm64;
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				OPENSSL_PREFIX = "$(OPENSSL_PREFIX_$(NATIVE_ARCH_ACTUAL))";
+				OPENSSL_PREFIX_arm64 = "/opt/homebrew/opt/openssl@3";
+				OPENSSL_PREFIX_x86_64 = "/usr/local/opt/openssl@3";
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -251,7 +254,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = arm64;
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				OPENSSL_PREFIX = "$(OPENSSL_PREFIX_$(NATIVE_ARCH_ACTUAL))";
+				OPENSSL_PREFIX_arm64 = "/opt/homebrew/opt/openssl@3";
+				OPENSSL_PREFIX_x86_64 = "/usr/local/opt/openssl@3";
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -298,7 +304,7 @@
 					"$(PROJECT_DIR)/build/uxplay/playfair/libplayfair.a",
 					"$(PROJECT_DIR)/build/uxplay/llhttp/libllhttp.a",
 					"$(PROJECT_DIR)/build/libplist/lib/libplist-2.0.a",
-					"/opt/homebrew/opt/openssl@3/lib/libcrypto.a",
+					"$(OPENSSL_PREFIX)/lib/libcrypto.a",
 				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jstayton.remi;
@@ -331,7 +337,7 @@
 					"$(PROJECT_DIR)/build/uxplay/playfair/libplayfair.a",
 					"$(PROJECT_DIR)/build/uxplay/llhttp/libllhttp.a",
 					"$(PROJECT_DIR)/build/libplist/lib/libplist-2.0.a",
-					"/opt/homebrew/opt/openssl@3/lib/libcrypto.a",
+					"$(OPENSSL_PREFIX)/lib/libcrypto.a",
 				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jstayton.remi;

@@ -186,7 +186,7 @@ final class Recording: @unchecked Sendable {
     at endTime: CMTime, onLetterboxProgress: @escaping @Sendable (Double) -> Void
   ) async throws -> (URL, (any Error)?) {
     await waitUntilDrained()
-    let (input, lastFrameTime, failure) = lock.withLock { (input, lastFrameTime, failure) }
+    let (input, lastFrameTime, failure) = lock.withLock { (self.input, self.lastFrameTime, self.failure) }
     if let failure {
       discard()
       throw failure

@@ -100,8 +100,9 @@ phone that's plugged in stays with Android Studio's adb.
 
 ### Prerequisites
 
-- macOS 26 or later on Apple silicon
-- [Xcode](https://developer.apple.com/xcode/) 27
+- macOS 26 or later
+- [Xcode](https://developer.apple.com/xcode/) 26 or 27 (Xcode 27 needs Apple
+  silicon). Built with Xcode 26, the menu doesn't show device icons on macOS 27.
 - [Homebrew](https://brew.sh) packages for building UxPlay and libplist:
 
   ```bash
@@ -133,6 +134,9 @@ open build/DerivedData/Build/Products/Debug/Remi.app
 
 The app is signed ad hoc ("Sign to Run Locally"), so macOS may ask for Local
 Network access again after a rebuild.
+
+It's built for the Mac's own architecture, the only one Homebrew's OpenSSL has,
+so a build made on an Intel Mac only runs on Intel Macs.
 
 To use your own build day to day, install a Release build in /Applications.
 This quits and replaces any running copy:
