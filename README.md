@@ -102,7 +102,7 @@ phone that's plugged in stays with Android Studio's adb.
 ### Prerequisites
 
 - macOS 26 or later
-- [Xcode](https://developer.apple.com/xcode/) 26 or 27
+- [Xcode](https://developer.apple.com/xcode/) 26 or later
 - [Homebrew](https://brew.sh) packages for building UxPlay and libplist:
 
   ```bash
