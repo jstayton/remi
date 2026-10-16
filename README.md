@@ -16,10 +16,11 @@ screenshots and recordings.
 
 ## Install
 
-Remi needs a Mac with Apple silicon and macOS 26 or later.
+Remi needs macOS 26 or later.
 
-1. Download `Remi-<version>.zip` from the latest
-   [release](../../releases/latest), open it, and drag **Remi** to
+1. Download Remi from the latest [release](../../releases/latest):
+   `Remi-<version>-AppleSilicon.zip` for a Mac with Apple silicon, or
+   `Remi-<version>-Intel.zip` for an Intel Mac. Open it, and drag **Remi** to
    Applications.
 2. Open Remi. Remi isn't signed with an Apple Developer ID, so macOS says it
    can't verify it. Click **Done**.
@@ -206,8 +207,22 @@ bin/release 0.2.0
 
 This commits and tags the version, builds and zips the app, and packages the
 source that GPL-3.0 and LGPL-2.1 require next to it. Then it pushes and drafts
-the release. Add release notes on GitHub and publish it. If anything fails
-before the push, the version commit and tag are undone.
+the release. If anything fails before the push, the version commit and tag are
+undone.
+
+The app is built for the Mac's own architecture only. To add the other one,
+check out the tag on a Mac with that architecture and add its build to the
+draft:
+
+```bash
+git fetch --tags && git checkout v0.2.0 && git submodule update
+```
+
+```bash
+bin/release 0.2.0 --add-build
+```
+
+Then add release notes on GitHub and publish it.
 
 If drafting fails after the push, rerunning `bin/release` stops because the tag
 already exists. Draft it by hand with the files in `build/release/`:
