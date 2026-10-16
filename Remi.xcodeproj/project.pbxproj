@@ -217,9 +217,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
-				OPENSSL_PREFIX = "$(OPENSSL_PREFIX_$(NATIVE_ARCH_ACTUAL))";
-				OPENSSL_PREFIX_arm64 = "/opt/homebrew/opt/openssl@3";
-				OPENSSL_PREFIX_x86_64 = "/usr/local/opt/openssl@3";
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -243,6 +240,9 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				ONLY_ACTIVE_ARCH = YES;
+				OPENSSL_PREFIX = "$(OPENSSL_PREFIX_$(NATIVE_ARCH_ACTUAL))";
+				OPENSSL_PREFIX_arm64 = "/opt/homebrew/opt/openssl@3";
+				OPENSSL_PREFIX_x86_64 = "/usr/local/opt/openssl@3";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -255,9 +255,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
-				OPENSSL_PREFIX = "$(OPENSSL_PREFIX_$(NATIVE_ARCH_ACTUAL))";
-				OPENSSL_PREFIX_arm64 = "/opt/homebrew/opt/openssl@3";
-				OPENSSL_PREFIX_x86_64 = "/usr/local/opt/openssl@3";
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -274,6 +271,9 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				OPENSSL_PREFIX = "$(OPENSSL_PREFIX_$(NATIVE_ARCH_ACTUAL))";
+				OPENSSL_PREFIX_arm64 = "/opt/homebrew/opt/openssl@3";
+				OPENSSL_PREFIX_x86_64 = "/usr/local/opt/openssl@3";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
