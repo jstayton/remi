@@ -287,7 +287,7 @@
 				CODE_SIGN_ENTITLEMENTS = Remi/Remi.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_HARDENED_RUNTIME = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/build/uxplay-src/lib",
@@ -298,7 +298,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				OTHER_LDFLAGS = (
 					"$(PROJECT_DIR)/build/uxplay/airplay/libairplay.a",
 					"$(PROJECT_DIR)/build/uxplay/playfair/libplayfair.a",
@@ -320,7 +320,7 @@
 				CODE_SIGN_ENTITLEMENTS = Remi/Remi.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_HARDENED_RUNTIME = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/build/uxplay-src/lib",
@@ -331,7 +331,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				OTHER_LDFLAGS = (
 					"$(PROJECT_DIR)/build/uxplay/airplay/libairplay.a",
 					"$(PROJECT_DIR)/build/uxplay/playfair/libplayfair.a",
