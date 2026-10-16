@@ -222,7 +222,9 @@ git fetch --tags && git checkout v0.2.0 && git submodule update
 bin/release 0.2.0 --add-build
 ```
 
-Then add release notes on GitHub and publish it.
+Then add release notes on GitHub and publish it. Do this last: releases are
+immutable once published, so the other build can't be added afterward, and a
+mistake means releasing a new version.
 
 If drafting fails after the push, rerunning `bin/release` stops because the tag
 already exists. Draft it by hand with the files in `build/release/`:

@@ -142,7 +142,7 @@ if [[ "$MODE" == "--add-build" ]]; then
   check_ready_to_add_build
   build_app
   gh release upload "$TAG" "$ZIP"
-  echo "Added $(basename "$ZIP") to the $TAG draft."
+  echo "Added $(basename "$ZIP") to the $TAG draft. Add release notes and publish it on GitHub."
   exit 0
 fi
 check_ready
@@ -157,4 +157,5 @@ commit_version
 build_app
 package_source
 publish
-echo "Drafted $TAG. Add release notes and publish it on GitHub."
+echo "Drafted $TAG. Add the other Mac's build with --add-build before publishing, since published"
+echo "releases can't change. Then add release notes and publish it on GitHub."
