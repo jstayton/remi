@@ -89,7 +89,8 @@ library, which reverse-engineers Apple's handshake. A future iOS release could
 break it. Remi patches it (`uxplay/patches/`) so PIN pairing works reliably in
 v1.73.7, to close two holes in it (a client could skip pairing entirely, or pair
 with PIN 0000 without ever seeing the code), and to lock out guessing after
-repeated wrong PINs.
+repeated wrong PINs. One more makes it build against openssl@3, which Remi links,
+even when Homebrew's default OpenSSL is newer.
 
 For Android, Remi runs its own adb server on port 15037. macOS grants Local
 Network access to whichever app started the adb server, so one started by

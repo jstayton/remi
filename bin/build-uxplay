@@ -11,6 +11,12 @@ PLIST_OUT="$ROOT/build/libplist"
 UXPLAY_SRC="$ROOT/build/uxplay-src"
 UXPLAY_OUT="$ROOT/build/uxplay"
 STAMP="$UXPLAY_OUT/.inputs.sha256"
+# The openssl@3 the Xcode project links (OPENSSL_PREFIX), whichever OpenSSL Homebrew has linked.
+if [[ "$(uname -m)" == "arm64" ]]; then
+  OPENSSL_PREFIX="/opt/homebrew/opt/openssl@3"
+else
+  OPENSSL_PREFIX="/usr/local/opt/openssl@3"
+fi
 
 # Xcode runs this script with a minimal PATH.
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
@@ -65,10 +71,10 @@ build_uxplay() {
   for patch in "$ROOT"/uxplay/patches/*.patch; do
     (cd "$UXPLAY_SRC" && patch -p1 --quiet --forward < "$patch")
   done
-  cmake -S "$ROOT/uxplay" -B "$UXPLAY_OUT" \
+  PKG_CONFIG_PATH="$OPENSSL_PREFIX/lib/pkgconfig" cmake -S "$ROOT/uxplay" -B "$UXPLAY_OUT" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_OSX_DEPLOYMENT_TARGET="$DEPLOYMENT_TARGET" \
-    -DCMAKE_PREFIX_PATH="$PLIST_OUT" \
+    -DCMAKE_PREFIX_PATH="$PLIST_OUT;$OPENSSL_PREFIX" \
     -DUXPLAY_DIR="$UXPLAY_SRC" \
     "$@" > /dev/null
   cmake --build "$UXPLAY_OUT" --parallel
