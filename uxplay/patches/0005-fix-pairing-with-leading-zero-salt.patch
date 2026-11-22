@@ -1,0 +1,33 @@
+Fix PIN pairing failing when the SRP salt or verifier starts with a zero
+byte (about 2 in 256 pairings). csrp returns them without leading zeros, which
+v1.73.7 rejects. Upstream fixed the verifier (28ed70a), but still sends the
+zero-padded salt cut to the short length; csrp hashes the salt without its
+leading zeros, so send it that way.
+
+--- a/lib/pairing.c
++++ b/lib/pairing.c
+@@ -537,14 +537,20 @@
+                                        (const unsigned char **) &srp_s, &len_s,
+                                        (const unsigned char **) &srp_v, &len_v,
+                                        NULL, NULL);
+-    if (len_s != SRP_SALT_SIZE || len_v != SRP_VERIFIER_SIZE) {
++    /* srp_create_salted_verification_key drops the leading zero bytes of srp_s and srp_v */
++    int s_offset = SRP_SALT_SIZE - len_s;
++    int v_offset = SRP_VERIFIER_SIZE - len_v;
++    if (len_s <= 0 || len_v <= 0 || s_offset < 0 || v_offset < 0) {
+         return -3;
+     }
+ 
+-    memcpy(session->srp->salt, srp_s, SRP_SALT_SIZE);
+-    memcpy(session->srp->verifier, srp_v, SRP_VERIFIER_SIZE);
++    memset(session->srp->salt, 0, s_offset);
++    memcpy(session->srp->salt + s_offset, srp_s, len_s);
++    memset(session->srp->verifier, 0, v_offset);
++    memcpy(session->srp->verifier + v_offset, srp_v, len_v);
+ 
+-    *salt = (char *) session->srp->salt;
++    /* srp.c hashes the salt without its leading zeros, so the client must get it that way too */
++    *salt = (char *) session->srp->salt + s_offset;
+     *len_salt = len_s;
+ 
+     srp_create_server_ephemeral_key(SRP_SHA, SRP_NG,

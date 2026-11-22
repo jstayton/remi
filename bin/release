@@ -18,7 +18,7 @@ VERSION="${1:-}"
 MODE="${2:-}"
 ARGUMENT_COUNT=$#
 # Android's libusb, which is built into adb. AOSP stopped tagging platform-tools
-# releases after 35.0.2, but this, its latest commit, predates platform-tools 37.0.1.
+# releases after 35.0.2, but this, its latest commit, predates platform-tools 37.0.3.
 LIBUSB_COMMIT="7b5267099855d320f6013d667d113e3619f18bf5"
 LIBUSB_REPO="https://android.googlesource.com/platform/external/libusb"
 
