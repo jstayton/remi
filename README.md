@@ -111,7 +111,7 @@ phone that's plugged in stays with Android Studio's adb.
 
 ### Dependencies
 
-UxPlay (v1.73.7) and libplist (2.8.0) are pinned git submodules:
+UxPlay (v1.73.7) and libplist (2.8.1) are pinned git submodules:
 
 ```bash
 git submodule update --init
