@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Runs Remi's tests: the pairing and SRP tests of the patched UxPlay library (uxplay/tests), then the
+# app's unit tests (RemiTests). Extra arguments go to xcodebuild, such as
+# -only-testing:RemiTests/CaptureFileTests to run one suite.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+"$ROOT/bin/build-uxplay"
+cmake --build "$ROOT/build/uxplay" --target pairing_test srp_test
+"$ROOT/build/uxplay/pairing_test"
+"$ROOT/build/uxplay/srp_test"
+
+xcodebuild -project "$ROOT/Remi.xcodeproj" -scheme Remi -configuration Debug -destination "platform=macOS" \
+  -derivedDataPath "$ROOT/build/DerivedData" -quiet test "$@"

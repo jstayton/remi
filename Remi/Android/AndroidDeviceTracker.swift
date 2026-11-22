@@ -97,7 +97,7 @@ final class AndroidDeviceTracker {
 
 /// `adb track-devices` writes messages of a 4-hex-digit length followed by that
 /// many bytes of `adb devices -l` output.
-private final class TrackDevicesParser: @unchecked Sendable {
+final class TrackDevicesParser: @unchecked Sendable {
   private let lock = NSLock()
   private var buffer = Data()
   private let onDevices: @Sendable ([AndroidDevice]) -> Void

@@ -185,17 +185,41 @@ the app icon, render every size into the asset catalog:
 bin/render-app-icon
 ```
 
+### Tests
+
+Two suites run on every pull request in
+[GitHub Actions](https://docs.github.com/en/actions), and locally with:
+
+```bash
+bin/test
+```
+
+- `uxplay/tests` checks the UxPlay patches. `pairing_test.c` starts the patched
+  receiver on 127.0.0.1 (not advertised over Bonjour) and pairs with it the way
+  an iPhone does: PIN pairing, wrong PINs, the lockout, pair-verify, and SETUP
+  before and after pairing. `srp_test.c` pairs straight through UxPlay's SRP
+  code until salts with leading zeros come up. Set `REMI_TEST_VERBOSE=1` to see
+  UxPlay's log.
+- `RemiTests` holds the app's unit tests, in
+  [Swift Testing](https://developer.apple.com/documentation/testing). They run
+  inside Remi.app, which starts nothing while it hosts tests. Run one suite by
+  passing it on:
+
+  ```bash
+  bin/test -only-testing:RemiTests/CaptureFileTests
+  ```
+
 ### Code Style & Linting
 
 [swift-format](https://github.com/swiftlang/swift-format) (bundled with Xcode)
 handles formatting, configured in `.swift-format`:
 
 ```bash
-swift format lint --strict -r Remi
+swift format lint --strict -r Remi RemiTests
 ```
 
 ```bash
-swift format format -i -r Remi
+swift format format -i -r Remi RemiTests
 ```
 
 ## Releasing

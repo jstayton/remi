@@ -8,6 +8,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   static func main() {
     let application = NSApplication.shared
+    // When hosting RemiTests, run without the delegate so tests never start AirPlay or adb.
+    if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+      application.run()
+      return
+    }
     let delegate = AppDelegate()
     application.delegate = delegate
     application.setActivationPolicy(.accessory)

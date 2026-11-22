@@ -62,7 +62,7 @@ final class ScrcpySession: @unchecked Sendable {
       let port = try await forward(to: "scrcpy_\(scid)")
       try startServer(scid: scid)
       let socket = try await connect(port: port)
-      let name = try readStreamHeader(from: socket)
+      let name = try Self.readStreamHeader(from: socket, serial: serial)
       startReading(from: socket, onEnd: onEnd)
       return name
     } catch {
@@ -244,7 +244,8 @@ final class ScrcpySession: @unchecked Sendable {
     throw RemiError(.scrcpyConnectFailed, "Couldn't connect to the scrcpy server on \(serial)")
   }
 
-  private func readStreamHeader(from socket: LoopbackSocket) throws -> String {
+  /// The device's name (or `serial` if it has none), once the stream says it's H.264.
+  static func readStreamHeader(from socket: LoopbackSocket, serial: String) throws -> String {
     let nameBytes = try socket.read(count: Self.deviceNameLength)
     let name = String(decoding: nameBytes.prefix { $0 != 0 }, as: UTF8.self)
     let codecID = Self.uint32(try socket.read(count: 4), at: 0)
@@ -264,7 +265,7 @@ final class ScrcpySession: @unchecked Sendable {
       var hasReceivedVideo = false
       var failure: (any Error)?
       do {
-        try readPackets(from: socket) {
+        try Self.readPackets(from: socket, receive: sink.receive) {
           hasReceivedVideo = true
         }
       } catch {
@@ -288,7 +289,9 @@ final class ScrcpySession: @unchecked Sendable {
   /// 12-byte headers: a set top bit marks a session packet (flags, width, height) sent on
   /// rotation; otherwise it's an 8-byte PTS with flags and a 4-byte payload length. The next
   /// bit marks codec configuration (SPS/PPS), which isn't video yet.
-  private func readPackets(from socket: LoopbackSocket, onFirstVideo: () -> Void) throws {
+  static func readPackets(
+    from socket: LoopbackSocket, receive: (UnsafeRawBufferPointer) -> Void, onFirstVideo: () -> Void
+  ) throws {
     var hasReceivedVideo = false
     while true {
       let header = try socket.read(count: Self.headerLength)
@@ -301,7 +304,7 @@ final class ScrcpySession: @unchecked Sendable {
         throw RemiError(.scrcpyProtocolInvalid, "Invalid packet size \(size)")
       }
       let payload = try socket.read(count: size)
-      payload.withUnsafeBytes { sink.receive($0) }
+      payload.withUnsafeBytes(receive)
       if !hasReceivedVideo && !isConfiguration {
         hasReceivedVideo = true
         socket.setReadTimeout(seconds: 0)
