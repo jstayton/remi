@@ -86,10 +86,10 @@ Remi is built with [Swift](https://www.swift.org) and
 
 macOS has no public API for receiving AirPlay, so Remi embeds UxPlay's protocol
 library, which reverse-engineers Apple's handshake. A future iOS release could
-break it. Remi patches it (`uxplay/patches/`) so PIN pairing works in v1.73.7,
-to close two holes in it (a client could skip pairing entirely, or pair with PIN
-0000 without ever seeing the code), and to lock out guessing after repeated
-wrong PINs.
+break it. Remi patches it (`uxplay/patches/`) so PIN pairing works reliably in
+v1.73.7, to close two holes in it (a client could skip pairing entirely, or pair
+with PIN 0000 without ever seeing the code), and to lock out guessing after
+repeated wrong PINs.
 
 For Android, Remi runs its own adb server on port 15037. macOS grants Local
 Network access to whichever app started the adb server, so one started by
