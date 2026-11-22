@@ -16,12 +16,11 @@ screenshots and recordings.
 
 ## Install
 
-Remi needs macOS 26 or later.
+Remi needs a Mac with Apple silicon and macOS 26 or later. The last release for
+Intel Macs is [v0.2.0](../../releases/tag/v0.2.0).
 
-1. Download Remi from the latest [release](../../releases/latest):
-   `Remi-<version>-AppleSilicon.zip` for a Mac with Apple silicon, or
-   `Remi-<version>-Intel.zip` for an Intel Mac. Open it, and drag **Remi** to
-   Applications.
+1. Download `Remi-<version>-AppleSilicon.zip` from the latest
+   [release](../../releases/latest). Open it, and drag **Remi** to Applications.
 2. Open Remi. Remi isn't signed with an Apple Developer ID, so macOS says it
    can't verify it. Click **Done**.
 3. Open System Settings > Privacy & Security, scroll down to the message about
@@ -224,7 +223,14 @@ swift format format -i -r Remi RemiTests
 
 ## Releasing
 
-Releases are GitHub Releases, tagged `v<version>`. From a clean `main`:
+Releases are GitHub Releases, tagged `v<version>`, and made from `main`. Work
+lands in `development` (the default branch), so first bring `main` up to it:
+
+```bash
+git checkout main && git pull --ff-only && git merge --ff-only origin/development && git submodule update --init
+```
+
+Then, from a clean `main`:
 
 ```bash
 bin/release 0.2.0
@@ -233,23 +239,18 @@ bin/release 0.2.0
 This commits and tags the version, builds and zips the app, and packages the
 source that GPL-3.0 and LGPL-2.1 require next to it. Then it pushes and drafts
 the release. If anything fails before the push, the version commit and tag are
-undone.
+undone. It refuses to run if `main` is missing changes from `development`, and
+it runs on an Apple silicon Mac, since releases are for Apple silicon only.
 
-The app is built for the Mac's own architecture only. To add the other one,
-check out the tag on a Mac with that architecture and add its build to the
-draft:
+Add release notes to the draft on GitHub and publish it. Releases are immutable
+once published, so a mistake means releasing a new version.
+
+Afterward, bring the version commit back to `development`. If anything landed
+there during the release, this makes a merge commit instead of fast-forwarding:
 
 ```bash
-git fetch --tags && git checkout v0.2.0 && git submodule update
+git checkout development && git pull --ff-only && git merge --no-edit main && git push
 ```
-
-```bash
-bin/release 0.2.0 --add-build
-```
-
-Then add release notes on GitHub and publish it. Do this last: releases are
-immutable once published, so the other build can't be added afterward, and a
-mistake means releasing a new version.
 
 If drafting fails after the push, rerunning `bin/release` stops because the tag
 already exists. Draft it by hand with the files in `build/release/`:
